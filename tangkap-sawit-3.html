@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tangkap Sawit ke Mangkok 🌴 | Dev:MADZxSIGMA</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    body {
+      background: #0d1a0d;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      max-height: 850px;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(0,0,0,0.7);
+      background: #1a2a1a;
+    }
+
+    /* Background photo */
+    #bg-photo {
+      position: absolute;
+      inset: 0;
+      background-image: url('prabowo.jpg');
+      background-size: cover;
+      background-position: center top;
+      background-repeat: no-repeat;
+      filter: brightness(0.65) contrast(1.05);
+      z-index: 0;
+    }
+
+    #bg-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 20, 10, 0.25) 0%,
+        rgba(0, 30, 15, 0.15) 35%,
+        rgba(10, 40, 15, 0.4) 70%,
+        rgba(20, 35, 15, 0.65) 100%
+      );
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .ground {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 15%;
+      background: linear-gradient(to top, rgba(50,35,20,0.85) 0%, rgba(70,50,30,0.5) 50%, transparent 100%);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* HUD */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 78px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      z-index: 100;
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+    }
+
+    .hud-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .hearts {
+      color: #ff5252;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+
+    #score-display {
+      font-size: 18px;
+      color: #ffeb3b;
+    }
+
+    #timer-display {
+      font-size: 20px;
+      color: #4fc3f7;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #level-display, #combo-display {
+      font-size: 12px;
+      opacity: 0.95;
+    }
+
+    #combo-display {
+      color: #ff9800;
+      min-height: 16px;
+    }
+
+    #dev-credit {
+      position: absolute;
+      bottom: 6px;
+      right: 10px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.75);
+      z-index: 90;
+      text-shadow: 1px 1px 2px #000;
+      pointer-events: none;
+      font-weight: 600;
+    }
+
+    #play-area {
+      position: absolute;
+      top: 78px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    /* Falling 🌴 emoji */
+    .pohon {
+      position: absolute;
+      font-size: 42px;
+      line-height: 1;
+      z-index: 20;
+      pointer-events: none;
+      filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.45));
+      transform-origin: center center;
+    }
+
+    /* Bowl */
+    #bowl-container {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 130px;
+      height: 95px;
+      z-index: 50;
+      transition: transform 0.05s linear;
+    }
+
+    #bowl {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .bowl-body {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 58px;
+      background: linear-gradient(to bottom, #d7ccc8, #a1887f 40%, #8d6e63 80%, #6d4c41);
+      border-radius: 10px 10px 42% 42%;
+      box-shadow: 
+        inset 0 8px 12px rgba(255,255,255,0.25),
+        inset 0 -6px 10px rgba(0,0,0,0.3),
+        0 6px 14px rgba(0,0,0,0.45);
+      border: 3px solid #5d4037;
+      overflow: hidden;
+    }
+
+    .bowl-rim {
+      position: absolute;
+      top: 28px;
+      left: -7px;
+      width: calc(100% + 14px);
+      height: 18px;
+      background: linear-gradient(to bottom, #efebe9, #bcaaa4);
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.35);
+      border: 2px solid #5d4037;
+      z-index: 2;
+    }
+
+    .bowl-inside {
+      position: absolute;
+      top: 35px;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      background: linear-gradient(to bottom, #5d4037, #3e2723);
+      border-radius: 8px 8px 32% 32%;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    #caught-pohons {
+      position: absolute;
+      bottom: 12px;
+      left: 8px;
+      right: 8px;
+      height: 52px;
+      display: flex;
+      flex-wrap: wrap-reverse;
+      justify-content: center;
+      align-content: flex-start;
+      gap: 0px;
+      padding: 2px;
+      z-index: 3;
+      pointer-events: none;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .caught-pohon {
+      animation: drop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      flex-shrink: 0;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4));
+    }
+
+    @keyframes drop-in {
+      0% { transform: translateY(-40px) scale(0.3); opacity: 0; }
+      60% { transform: translateY(3px) scale(1.2); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    #full-label {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ff5722;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 10px;
+      border-radius: 10px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    #full-label.show {
+      opacity: 1;
+      animation: pulse-full 0.8s infinite alternate;
+    }
+
+    @keyframes pulse-full {
+      from { transform: translateX(-50%) scale(1); }
+      to { transform: translateX(-50%) scale(1.12); }
+    }
+
+    .plus-one {
+      position: absolute;
+      color: #ffeb3b;
+      font-weight: 900;
+      font-size: 22px;
+      text-shadow: 0 0 10px #ff9800, 2px 2px 0 #000;
+      pointer-events: none;
+      z-index: 200;
+      animation: float-up 0.9s ease-out forwards;
+    }
+
+    @keyframes float-up {
+      0% { transform: translateY(0) scale(0.8); opacity: 1; }
+      100% { transform: translateY(-75px) scale(1.3); opacity: 0; }
+    }
+
+    .sparkle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #fff;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 150;
+      animation: sparkle-anim 0.6s ease-out forwards;
+    }
+
+    @keyframes sparkle-anim {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(0) translateY(-28px); opacity: 0; }
+    }
+
+    .bowl-bounce {
+      animation: bowl-bounce 0.3s ease-out;
+    }
+
+    @keyframes bowl-bounce {
+      0% { transform: translateX(-50%) scale(1); }
+      40% { transform: translateX(-50%) scale(1.12, 0.88); }
+      70% { transform: translateX(-50%) scale(0.95, 1.06); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 25, 15, 0.92);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 300;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .screen h1 {
+      font-size: 26px;
+      margin-bottom: 8px;
+      color: #ffeb3b;
+      text-shadow: 2px 2px 0 #000;
+      line-height: 1.25;
+    }
+
+    .screen p {
+      font-size: 14px;
+      margin: 6px 0;
+      line-height: 1.5;
+      max-width: 310px;
+      opacity: 0.95;
+    }
+
+    .btn {
+      margin-top: 18px;
+      padding: 13px 34px;
+      font-size: 17px;
+      font-weight: bold;
+      background: linear-gradient(to bottom, #ff9800, #f57c00);
+      color: white;
+      border: none;
+      border-radius: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #e65100, 0 6px 12px rgba(0,0,0,0.35);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #e65100, 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    #start-screen .logo {
+      font-size: 48px;
+      margin-bottom: 6px;
+    }
+
+    #game-over-screen h1 {
+      color: #ff5252;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #controls-hint {
+      position: absolute;
+      bottom: 125px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.65);
+      color: white;
+      padding: 7px 14px;
+      border-radius: 18px;
+      font-size: 12px;
+      z-index: 40;
+      opacity: 0.85;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .miss-flash {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 45px;
+      background: rgba(255, 30, 30, 0.4);
+      pointer-events: none;
+      z-index: 60;
+      animation: flash-miss 0.4s ease-out forwards;
+    }
+
+    @keyframes flash-miss {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    @media (max-width: 400px) {
+      #hud { font-size: 13px; height: 70px; padding: 6px 10px; }
+      #play-area { top: 70px; }
+      .hearts { font-size: 17px; }
+      #score-display, #timer-display { font-size: 16px; }
+      #bowl-container { width: 110px; height: 85px; }
+      .pohon { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <!-- Background photo -->
+    <div id="bg-photo"></div>
+    <div id="bg-overlay"></div>
+    <div class="ground"></div>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div class="hud-item">
+        <span class="hearts" id="hearts">❤️❤️❤️</span>
+        <span id="level-display">Level 1</span>
+      </div>
+      <div class="hud-item">
+        <div id="score-display">🌴 0</div>
+        <div id="combo-display"></div>
+      </div>
+      <div class="hud-item">
+        <div id="timer-display">⏱ 0s</div>
+        <span style="font-size:11px;opacity:0.8">waktu</span>
+      </div>
+    </div>
+
+    <!-- Play area -->
+    <div id="play-area">
+      <div id="bowl-container">
+        <div id="full-label">FULL!</div>
+        <div id="bowl">
+          <div class="bowl-rim"></div>
+          <div class="bowl-body">
+            <div class="bowl-inside"></div>
+          </div>
+          <div id="caught-pohons"></div>
+        </div>
+      </div>
+      <div id="controls-hint">← Geser / Panah / A D →</div>
+    </div>
+
+    <div id="dev-credit">Dev: MADZxSIGMA</div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+      <div class="logo">🌴🥣</div>
+      <h1>Tangkap Sawit<br>ke Mangkok</h1>
+      <p>Gerakkan mangkok untuk menangkap <b>🌴</b> yang jatuh!</p>
+      <p>Bertahan selama mungkin. Kamu punya 3 nyawa.</p>
+      <p style="font-size:12px;opacity:0.7;margin-top:12px">Dev: MADZxSIGMA</p>
+      <button class="btn" id="start-btn">Mulai Main!</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen hidden">
+      <h1>Game Over!</h1>
+      <p id="final-score">Skor: 0</p>
+      <p id="final-time">Waktu Bertahan: 0 detik</p>
+      <p id="final-level">Level: 1</p>
+      <p id="high-score">Rekor: 0</p>
+      <p style="font-size:12px;opacity:0.7;margin-top:8px">Dev: MADZxSIGMA</p>
+      <button class="btn" id="restart-btn">Main Lagi</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== SOUND =====
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new AudioCtx();
+    }
+
+    function playTone(freq, type, duration, volume = 0.15, slideTo = null) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      if (slideTo) {
+        osc.frequency.exponentialRampToValueAtTime(slideTo, audioCtx.currentTime + duration);
+      }
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function sfxCatch() {
+      playTone(520, 'sine', 0.12, 0.18);
+      setTimeout(() => playTone(780, 'sine', 0.15, 0.14), 60);
+    }
+
+    function sfxMiss() {
+      playTone(180, 'sawtooth', 0.25, 0.12, 80);
+    }
+
+    function sfxLevelUp() {
+      playTone(400, 'square', 0.08, 0.1);
+      setTimeout(() => playTone(600, 'square', 0.08, 0.1), 90);
+      setTimeout(() => playTone(800, 'square', 0.12, 0.1), 180);
+    }
+
+    function sfxGameOver() {
+      playTone(300, 'triangle', 0.2, 0.15, 150);
+      setTimeout(() => playTone(200, 'triangle', 0.3, 0.12, 100), 200);
+    }
+
+    // ===== STATE =====
+    const state = {
+      score: 0,
+      lives: 3,
+      level: 1,
+      combo: 0,
+      maxCombo: 0,
+      isPlaying: false,
+      bowlX: 50,
+      falling: [],
+      caughtCount: 0,
+      maxVisible: 16,
+      spawnTimer: 0,
+      spawnInterval: 1200,
+      fallSpeed: 2.0,
+      lastTime: 0,
+      timeAlive: 0,          // detik bertahan (dari 0 naik terus)
+      timerAcc: 0,
+      highScore: parseInt(localStorage.getItem('sawitHighScore') || '0'),
+      keys: { left: false, right: false }
+    };
+
+    // DOM
+    const playArea = document.getElementById('play-area');
+    const bowlContainer = document.getElementById('bowl-container');
+    const caughtContainer = document.getElementById('caught-pohons');
+    const heartsEl = document.getElementById('hearts');
+    const scoreEl = document.getElementById('score-display');
+    const levelEl = document.getElementById('level-display');
+    const comboEl = document.getElementById('combo-display');
+    const timerEl = document.getElementById('timer-display');
+    const fullLabel = document.getElementById('full-label');
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const controlsHint = document.getElementById('controls-hint');
+
+    function init() {
+      state.bowlX = 50;
+      updateBowlPosition();
+
+      document.getElementById('start-btn').addEventListener('click', () => {
+        initAudio();
+        startGame();
+      });
+      document.getElementById('restart-btn').addEventListener('click', () => {
+        initAudio();
+        startGame();
+      });
+
+      window.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') state.keys.left = true;
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') state.keys.right = true;
+      });
+      window.addEventListener('keyup', e => {
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') state.keys.left = false;
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') state.keys.right = false;
+      });
+
+      let dragging = false;
+      playArea.addEventListener('pointerdown', e => {
+        dragging = true;
+        moveBowlTo(e.clientX);
+      });
+      window.addEventListener('pointermove', e => {
+        if (dragging) moveBowlTo(e.clientX);
+      });
+      window.addEventListener('pointerup', () => dragging = false);
+      window.addEventListener('pointercancel', () => dragging = false);
+    }
+
+    function moveBowlTo(clientX) {
+      const rect = playArea.getBoundingClientRect();
+      const x = ((clientX - rect.left) / rect.width) * 100;
+      state.bowlX = Math.max(14, Math.min(86, x));
+      updateBowlPosition();
+    }
+
+    function updateBowlPosition() {
+      bowlContainer.style.left = state.bowlX + '%';
+      bowlContainer.style.transform = 'translateX(-50%)';
+    }
+
+    function startGame() {
+      state.score = 0;
+      state.lives = 3;
+      state.level = 1;
+      state.combo = 0;
+      state.maxCombo = 0;
+      state.isPlaying = true;
+      state.falling = [];
+      state.caughtCount = 0;
+      state.spawnTimer = 0;
+      state.spawnInterval = 1200;
+      state.fallSpeed = 2.0;
+      state.timeAlive = 0;
+      state.timerAcc = 0;
+      state.bowlX = 50;
+      updateBowlPosition();
+
+      playArea.querySelectorAll('.pohon').forEach(el => el.remove());
+      caughtContainer.innerHTML = '';
+      fullLabel.classList.remove('show');
+
+      updateHUD();
+      startScreen.classList.add('hidden');
+      gameOverScreen.classList.add('hidden');
+      controlsHint.style.opacity = '0.85';
+      setTimeout(() => { controlsHint.style.opacity = '0'; }, 3000);
+
+      state.lastTime = performance.now();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function endGame() {
+      state.isPlaying = false;
+      sfxGameOver();
+      if (state.score > state.highScore) {
+        state.highScore = state.score;
+        localStorage.setItem('sawitHighScore', state.highScore);
+      }
+      document.getElementById('final-score').textContent = `Skor: ${state.score} 🌴`;
+      document.getElementById('final-time').textContent = `Waktu Bertahan: ${state.timeAlive} detik`;
+      document.getElementById('final-level').textContent = `Level: ${state.level} | Combo Terbaik: ${state.maxCombo}`;
+      document.getElementById('high-score').textContent = `Rekor Tertinggi: ${state.highScore}`;
+      gameOverScreen.classList.remove('hidden');
+    }
+
+    function updateHUD() {
+      heartsEl.textContent = '❤️'.repeat(state.lives) + '🖤'.repeat(3 - state.lives);
+      scoreEl.textContent = `🌴 ${state.score}`;
+      levelEl.textContent = `Level ${state.level}`;
+      timerEl.textContent = `⏱ ${state.timeAlive}s`;
+      if (state.combo >= 3) {
+        comboEl.textContent = `🔥 Combo x${state.combo}`;
+      } else {
+        comboEl.textContent = '';
+      }
+    }
+
+    function spawnPohon() {
+      const el = document.createElement('div');
+      el.className = 'pohon';
+      el.textContent = '🌴';
+      const x = 8 + Math.random() * 84;
+      el.style.left = x + '%';
+      el.style.top = '-60px';
+      playArea.appendChild(el);
+
+      state.falling.push({
+        el,
+        x,
+        y: -60,
+        speed: state.fallSpeed + Math.random() * 0.9,
+        rot: (Math.random() - 0.5) * 30,
+        caught: false
+      });
+    }
+
+    function tryCatch(item) {
+      const bowlRect = bowlContainer.getBoundingClientRect();
+      const playRect = playArea.getBoundingClientRect();
+      const bowlLeft = ((bowlRect.left - playRect.left) / playRect.width) * 100;
+      const bowlRight = ((bowlRect.right - playRect.left) / playRect.width) * 100;
+      const bowlTop = bowlRect.top - playRect.top;
+
+      if (item.y + 45 >= bowlTop - 15 && item.y < bowlTop + 50) {
+        if (item.x > bowlLeft - 6 && item.x < bowlRight + 6) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function onCatch(item) {
+      item.caught = true;
+      item.el.remove();
+      sfxCatch();
+
+      state.score += 1;
+      state.combo += 1;
+      if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+      if (state.combo > 0 && state.combo % 5 === 0) state.score += 2;
+
+      const newLevel = Math.floor(state.score / 8) + 1;
+      if (newLevel > state.level) {
+        state.level = newLevel;
+        state.fallSpeed = Math.min(6.5, 2.0 + (state.level - 1) * 0.35);
+        state.spawnInterval = Math.max(450, 1200 - (state.level - 1) * 75);
+        sfxLevelUp();
+      }
+
+      updateHUD();
+      addToBowl();
+      showPlusOne(item.x);
+      createSparkles(item.x, 75);
+      bounceBowl();
+    }
+
+    function addToBowl() {
+      state.caughtCount++;
+      if (state.caughtCount <= state.maxVisible) {
+        const s = document.createElement('div');
+        s.className = 'caught-pohon';
+        s.textContent = '🌴';
+        s.style.transform = `rotate(${(Math.random() - 0.5) * 30}deg)`;
+        s.style.fontSize = (16 + Math.random() * 6) + 'px';
+        caughtContainer.appendChild(s);
+      } else if (state.caughtCount === state.maxVisible + 1) {
+        fullLabel.classList.add('show');
+      }
+    }
+
+    function showPlusOne(xPercent) {
+      const el = document.createElement('div');
+      el.className = 'plus-one';
+      el.textContent = state.combo >= 5 ? `+1 🔥` : `+1!`;
+      el.style.left = xPercent + '%';
+      el.style.bottom = '115px';
+      playArea.appendChild(el);
+      setTimeout(() => el.remove(), 900);
+    }
+
+    function createSparkles(xPercent, yFromBottom) {
+      for (let i = 0; i < 7; i++) {
+        const sp = document.createElement('div');
+        sp.className = 'sparkle';
+        sp.style.left = `calc(${xPercent}% + ${(Math.random() - 0.5) * 50}px)`;
+        sp.style.bottom = (yFromBottom + Math.random() * 35) + 'px';
+        sp.style.background = ['#fff', '#ffeb3b', '#ff9800', '#81c784'][Math.floor(Math.random() * 4)];
+        playArea.appendChild(sp);
+        setTimeout(() => sp.remove(), 600);
+      }
+    }
+
+    function bounceBowl() {
+      bowlContainer.classList.remove('bowl-bounce');
+      void bowlContainer.offsetWidth;
+      bowlContainer.classList.add('bowl-bounce');
+    }
+
+    function onMiss() {
+      state.lives--;
+      state.combo = 0;
+      sfxMiss();
+      updateHUD();
+
+      const flash = document.createElement('div');
+      flash.className = 'miss-flash';
+      playArea.appendChild(flash);
+      setTimeout(() => flash.remove(), 400);
+
+      if (state.lives <= 0) {
+        endGame();
+      }
+    }
+
+    function gameLoop(timestamp) {
+      if (!state.isPlaying) return;
+
+      const dt = Math.min(32, timestamp - state.lastTime);
+      state.lastTime = timestamp;
+
+      // Timer naik dari 0
+      state.timerAcc += dt;
+      if (state.timerAcc >= 1000) {
+        state.timerAcc -= 1000;
+        state.timeAlive += 1;
+        updateHUD();
+      }
+
+      // Move bowl
+      if (state.keys.left) {
+        state.bowlX = Math.max(14, state.bowlX - 1.9);
+        updateBowlPosition();
+      }
+      if (state.keys.right) {
+        state.bowlX = Math.min(86, state.bowlX + 1.9);
+        updateBowlPosition();
+      }
+
+      // Spawn
+      state.spawnTimer += dt;
+      if (state.spawnTimer >= state.spawnInterval) {
+        state.spawnTimer = 0;
+        spawnPohon();
+      }
+
+      // Update falling
+      const playHeight = playArea.clientHeight;
+      for (let i = state.falling.length - 1; i >= 0; i--) {
+        const item = state.falling[i];
+        if (item.caught) {
+          state.falling.splice(i, 1);
+          continue;
+        }
+
+        item.y += item.speed * (dt / 16);
+        item.rot += (item.speed * 0.4) * (dt / 16) * (item.x > 50 ? 1 : -1);
+        item.el.style.top = item.y + 'px';
+        item.el.style.transform = `rotate(${item.rot}deg)`;
+
+        if (item.y > playHeight - 140) {
+          if (tryCatch(item)) {
+            onCatch(item);
+            state.falling.splice(i, 1);
+          }
+        }
+
+        if (item.y > playHeight + 40) {
+          item.el.remove();
+          state.falling.splice(i, 1);
+          onMiss();
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    init();
+  </script>
+</body>
+</html>
